@@ -1,114 +1,142 @@
 ﻿using System;
 using System.Collections.Generic;
 
-public struct HistoryShop
+public class Shop
 {
-    public string description { get; set; }
-}
-public abstract class Product
-{
-    public int ProductId { get; set; }
-    public string Name { get; set; }
-    public decimal Price { get; set; }
-}
+    private List<Product> products;
+    private List<Receipt> receipts;
 
-public abstract class AfterShop
-{
-    public string Responses { get; set; }
-    public int Telephone { get; set; }
-}
-
-public abstract class Basket
-{
-    public List<Product> Products { get; set; }
-    public decimal TotalPrice { get; set; }
-
-    public abstract void AddProduct(Product product);
-}
-
-public struct Stock
-{
-    public int StockId { get; set; }
-    public string StockName { get; set; }
-}
-
-// AbstractFactory
-public abstract class StoreFactory
-{
-    public abstract Product CreateProduct();
-    public abstract AfterShop CreateAfterShop();
-    public abstract Basket CreateBasket();
-}
-
-// ConcreteFactory
-public class OnlineStoreFactory : StoreFactory
-{
-    public override Product CreateProduct()
+    public Shop()
     {
-        return new OnlineStoreProduct();
+        products = new List<Product>();
+        receipts = new List<Receipt>();
     }
 
-    public override AfterShop CreateAfterShop()
+    public void AddProduct(Product product)
     {
-        return new OnlineStoreAfterShop();
+        products.Add(product);
     }
 
-
-    public override Basket CreateBasket()
+    public void CreateReceipt(Buyer buyer, Product product, int quantityBought)
     {
-        return new OnlineStoreBasket();
-    }
-}
-
-// ConcreteClasses
-public class OnlineStoreProduct : Product { }
-
-public class OnlineStoreAfterShop : AfterShop { }
-
-public class OnlineStoreBasket : Basket
-{
-    public OnlineStoreBasket()
-    {
-        Products = new List<Product>();
-    }
-    public override void AddProduct(Product product)
-    {
-        if (Products == null)
+        if (products.Contains(product))
         {
-            Products = new List<Product>();
+            Receipt receipt = new Receipt(buyer, product, quantityBought);
+            receipts.Add(receipt);
         }
-
-        Products.Add(product);
-        TotalPrice += product.Price;
+        else
+        {
+            Console.WriteLine("Product not found in the shop.");
+        }
     }
+
+    public void PrintReceipts()
+    {
+        foreach (var receipt in receipts)
+        {
+            Console.WriteLine("Receipt Details:");
+            Console.WriteLine(receipt);
+            Console.WriteLine();
+        }
+    }
+}
+
+public struct Buyer
+{
+    private string name;
+    private string email;
+    public Buyer(string name, string email)
+    {
+        this.name = name;
+        this.email = email;
+    }
+    public string Name => name;
+
+    public string Email => email;
+}
+
+public class Product
+{
+
+    private string name;
+    private decimal price;
+    private int quantity;
+
+    public Product(string name, decimal price, int quantity)
+    {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+    public string Name => name;
+    public decimal Price => price;
+    public int Quantity
+    {
+        get { return quantity; }
+        set { quantity = value; }
+    }
+
+    public decimal CalculateTotalPrice()
+    {
+        return Price * Quantity;
+    }
+
+    public override string ToString()
+    {
+        return $"{Name}, costs only{Price:C2}, we've got {Quantity} left";
+    }
+}
+
+public class Receipt
+{
+    public string productName;
+    public string buyerName;
+    public decimal price;
+    public int quantity;
+    public Guid purchaseId;
+    public DateTime purchaseTime;
+
+    public Receipt(Buyer bayer, Product product, int quantityBoungth)
+    {
+        purchaseTime = DateTime.Now;
+        productName = product.Name;
+        price = product.Price;
+        quantity = quantityBoungth;
+        buyerName = bayer.Name;
+    }
+    public override string ToString()
+    {
+        return $"**Receipt**\n" +
+               $"Buyer: {buyerName}\n" +
+               $"Product: {productName}\n" +
+               $"Quantity: {quantity}\n" +
+               $"Price: {price}\n" +
+               $"Total: {price * quantity}\n" +
+               $"PurchaseTime: {purchaseTime}";
+    }
+
+    internal decimal CalculateTotalCost()
+    {
+        throw new NotImplementedException();
+    }
+
 }
 
 class Program
 {
-    static void Main(string[] args)
+    static void Main()
     {
-        HistoryShop hs = new HistoryShop();
-        hs.description = "The store was founded in 2023 and sells goods";
-        Console.WriteLine($"About us: {hs.description}");
+        Shop shop = new Shop();
 
-        StoreFactory onlineStoreFactory = new OnlineStoreFactory();
+        Product apple = new Product("Apple", 2.99m, 10);
+        shop.AddProduct(apple);
 
-        Product product1 = onlineStoreFactory.CreateProduct();
-        Product product2 = onlineStoreFactory.CreateProduct();
+        Buyer buyer = new Buyer("John", "john@i.ua");
+        shop.CreateReceipt(buyer, apple, 5);
 
-        AfterShop afterShop = onlineStoreFactory.CreateAfterShop();
-
-        Basket basket = onlineStoreFactory.CreateBasket();
-        basket.AddProduct(product1);
-        basket.AddProduct(product2);
-
-        Console.WriteLine("Order is processed!");
-
-        Stock stockItem = new Stock();
-        stockItem.StockId = 1;
-        stockItem.StockName = "Sneakers";
-
-        Console.WriteLine($"Stock ID: {stockItem.StockId}, Stock Name: {stockItem.StockName}");
+        shop.PrintReceipts();
     }
 }
+
+
 
